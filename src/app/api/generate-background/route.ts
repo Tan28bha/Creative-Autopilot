@@ -1,69 +1,51 @@
+// src/app/api/generate-background/route.ts
 import { NextResponse } from "next/server";
+
+const SD_URL =
+  process.env.STABLE_DIFFUSION_URL ||
+  "http://127.0.0.1:7860/sdapi/v1/txt2img";
 
 export async function POST(req: Request) {
   try {
-    const { prompt, brandName, primaryColor, secondaryColor, tone } =
-      await req.json();
+    const { prompt, width = 800, height = 1000 } = await req.json();
 
-    const fullPrompt = `
-      Ultra-clean advertisement background.
-      Smooth soft gradients, premium lighting, modern commercial aesthetic.
-      Brand style colors: ${primaryColor}, ${secondaryColor}
-      Mood: ${tone}
-      Additional style: ${prompt}
+    const body = {
+      prompt,
+      steps: 20,
+      cfg_scale: 7,
+      width,
+      height,
+      sampler_name: "Euler a",
+    };
 
-      Requirements:
-      - No objects
-      - No people
-      - No text
-      - Minimal noise
-      - Product-friendly
-      - Center composition
-      - High resolution
-      - Soft advertising gradient
-    `;
-
-    const response = await fetch(
-      "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text_prompts: [
-            { text: fullPrompt, weight: 1 },
-            { text: "ugly, cluttered, messy, random objects, people, text", weight: -1 }
-          ],
-          cfg_scale: 7,
-          steps: 40,
-          samples: 1,
-          width: 1024,
-          height: 1024,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("Stability error:", err);
-      return NextResponse.json({ error: err }, { status: 500 });
-    }
-
-    const result = await response.json();
-    const base64 = result.artifacts[0].base64;
-
-    return NextResponse.json({
-      imageUrl: `data:image/png;base64,${base64}`,
+    const res = await fetch(SD_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
-  } catch (error) {
-    console.error("Background Generation Error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate background" },
-      { status: 500 }
-    );
+    if (!res.ok) {
+      console.error("SD error status:", res.status, await res.text());
+      return NextResponse.json(
+        { error: "Stable Diffusion request failed" },
+        { status: 500 }
+      );
+    }
+
+    const json: any = await res.json();
+    if (!json.images || !json.images[0]) {
+      return NextResponse.json(
+        { error: "No image returned from SD" },
+        { status: 500 }
+      );
+    }
+
+    const base64 = json.images[0] as string;
+    const dataUrl = `data:image/png;base64,${base64}`;
+
+    return NextResponse.json({ imageUrl: dataUrl });
+  } catch (err) {
+    console.error("SD route error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

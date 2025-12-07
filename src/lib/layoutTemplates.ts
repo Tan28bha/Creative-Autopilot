@@ -1,63 +1,73 @@
-import type { BrandProfile, CreativeLayout } from "./types";
-
-let idCounter = 0;
-const genId = () => `layout_${++idCounter}`;
+import { CreativeLayout, BrandProfile } from "./types";
 
 export function generateBaseOfferLayout(brand: BrandProfile): CreativeLayout {
   return {
-    id: genId(),
-    name: "Square Offer",
-    width: 1080,
-    height: 1080,
-    background: {
-      type: "gradient",
-      gradient: {
-        from: brand.primaryColor,
-        to: brand.secondaryColor,
-        direction: "vertical",
-      },
-    },
+    id: crypto.randomUUID(),
+    name: "Main Creative",
+    width: 800,
+    height: 1000,
+    brandPrimary: brand.primaryColor,
+    brandSecondary: brand.secondaryColor,
+    backgroundUrl: undefined,
+
     elements: [
       {
-        id: "logo",
+        id: crypto.randomUUID(),
         type: "logo",
-        rect: { x: 0.06, y: 0.05, w: 0.18, h: 0.12 },
         imageUrl: brand.logoUrl,
+        x: 40,
+        y: 40,
+        width: 140,
+        height: 140,
       },
+
+      brand.productUrl
+        ? {
+            id: crypto.randomUUID(),
+            type: "product",
+            imageUrl: brand.productUrl,
+            x: 260,
+            y: 280,
+            width: 300,
+            height: 300,
+          }
+        : null,
+
       {
-        id: "product",
-        type: "product",
-        rect: { x: 0.55, y: 0.25, w: 0.35, h: 0.45 },
-        imageUrl: brand.productUrl,
-      },
-      {
-        id: "headline",
-        type: "headline",
-        rect: { x: 0.06, y: 0.28, w: 0.45, h: 0.2 },
-        text: "FLAT 30% OFF",
-        fontSize: 40,
-        fontWeight: "bold",
-        align: "left",
+        id: crypto.randomUUID(),
+        type: "text",
+        text: brand.name,
+        x: 50,
+        y: 220,
+        width: 600,
+        height: 60,
         color: "#ffffff",
+        fontSize: 42,
       },
+
       {
-        id: "subheadline",
-        type: "subheadline",
-        rect: { x: 0.06, y: 0.5, w: 0.45, h: 0.15 },
-        text: brand.tagline || "Limited time festive sale",
-        fontSize: 22,
-        align: "left",
-        color: "#f9fafb",
+        id: crypto.randomUUID(),
+        type: "offer",
+        text: "20% OFF",
+        x: 50,
+        y: 300,
+        width: 300,
+        height: 50,
+        color: "#FFD700",
+        fontSize: 48,
       },
+
       {
-        id: "cta",
+        id: crypto.randomUUID(),
         type: "cta",
-        rect: { x: 0.06, y: 0.7, w: 0.25, h: 0.1 },
         text: "Shop Now",
-        fontSize: 22,
-        align: "center",
-        color: "#111827",
+        x: 50,
+        y: 370,
+        width: 200,
+        height: 40,
+        color: "#ffffff",
+        fontSize: 28,
       },
-    ],
+    ].filter(Boolean) as any,
   };
 }

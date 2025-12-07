@@ -12,34 +12,7 @@ export type Rect = {
   h: number; // 0–1 relative
 };
 
-export type CreativeElement = {
-  id: string;
-  type: CreativeElementType;
-  rect: Rect;
-  text?: string;
-  fontSize?: number;
-  fontWeight?: "regular" | "bold";
-  align?: "left" | "center" | "right";
-  imageUrl?: string;
-  color?: string;
-};
-
-export type CreativeLayout = {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  background: {
-    type: "solid" | "gradient";
-    color?: string;
-    gradient?: {
-      from: string;
-      to: string;
-      direction: "vertical" | "horizontal";
-    };
-  };
-  elements: CreativeElement[];
-};
+// src/lib/types.ts
 
 export type BrandProfile = {
   name: string;
@@ -50,4 +23,43 @@ export type BrandProfile = {
   tone: "modern" | "playful" | "premium" | "minimal";
   logoUrl: string;
   productUrl?: string;
+};
+
+export type CreativeElementType =
+  | "logo"
+  | "product"
+  | "image"
+  | "text"
+  | "offer"
+  | "cta";
+
+export type CreativeElement = {
+  id: string;
+  type: CreativeElementType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text?: string;
+  imageUrl?: string; // used for logo/product/image
+  fontSize?: number;
+  color?: string;
+};
+
+export type CreativeLayout = {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+
+  backgroundUrl?: string;
+
+  brandPrimary: string;
+  brandSecondary: string;
+
+  borderRadius?: number;
+  shadow?: number;
+  baseFontSize?: number;
+
+  elements: CreativeElement[];
 };

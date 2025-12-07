@@ -1,91 +1,118 @@
+// src/components/CreativeCanvas.tsx
 "use client";
 
-import { Rnd } from "react-rnd";
+import Image from "next/image";
+import { useState } from "react";
 import type { CreativeLayout, CreativeElement } from "@/lib/types";
 
 type Props = {
   layout: CreativeLayout;
-  onChange: (layout: CreativeLayout) => void;
+  onChange: (updated: CreativeLayout) => void;
 };
 
 export function CreativeCanvas({ layout, onChange }: Props) {
-  const { width, height, background, elements } = layout;
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
 
-  const handleElementChange = (id: string, updated: Partial<CreativeElement>) => {
-    const next: CreativeLayout = {
-      ...layout,
-      elements: elements.map((el) => (el.id === id ? { ...el, ...updated } : el)),
-    };
-    onChange(next);
-  };
+  function handleMouseDown(e: React.MouseEvent, el: CreativeElement) {
+    setDraggingId(el.id);
+    setOffset({
+      x: e.clientX - (el.x ?? 0),
+      y: e.clientY - (el.y ?? 0),
+    });
+  }
 
-  const containerRatio = width / height;
+  function handleMouseMove(e: React.MouseEvent) {
+    if (!draggingId) return;
+
+    const updatedElements = layout.elements.map((el) => {
+      if (el.id !== draggingId) return el;
+
+      const newX = e.clientX - offset.x;
+      const newY = e.clientY - offset.y;
+
+      return {
+        ...el,
+        x: isNaN(newX) ? 0 : Math.max(0, newX),
+        y: isNaN(newY) ? 0 : Math.max(0, newY),
+      };
+    });
+
+    onChange({ ...layout, elements: updatedElements });
+  }
+
+  function handleMouseUp() {
+    setDraggingId(null);
+  }
+
+  const radius = layout.borderRadius ?? 16;
+  const shadowStrength = layout.shadow ?? 20;
+  const shadowOpacity = Math.min(0.5, 0.15 + shadowStrength / 80);
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="relative border border-slate-700 rounded-xl overflow-hidden"
-        style={{
-          width: 400,
-          height: 400 / containerRatio,
-          background:
-            background.type === "solid"
-              ? background.color
-              : background.gradient
-              ? `linear-gradient(${
-                  background.gradient.direction === "vertical" ? "180deg" : "90deg"
-                }, ${background.gradient.from}, ${background.gradient.to})`
-              : "#020617",
-        }}
-      >
-        {elements.map((el) => {
-          const left = el.rect.x * 100;
-          const top = el.rect.y * 100;
-          const w = el.rect.w * 100;
-          const h = el.rect.h * 100;
+    <div
+      className="relative border border-slate-700 overflow-hidden shadow-xl"
+      style={{
+        width: layout.width,
+        height: layout.height,
+        backgroundColor: layout.backgroundUrl ? "transparent" : layout.brandPrimary,
+        borderRadius: radius,
+        boxShadow: `0 18px 40px rgba(0,0,0,${shadowOpacity})`,
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
+      {/* Background layer */}
+      {layout.backgroundUrl && (
+        <Image
+          src={layout.backgroundUrl}
+          alt="Background"
+          fill
+          className="object-cover"
+        />
+      )}
 
-          return (
-            <Rnd
-              key={el.id}
-              size={{ width: `${w}%`, height: `${h}%` }}
-              position={{ x: (left / 100) * 400, y: (top / 100) * (400 / containerRatio) }}
-              bounds="parent"
-              onDragStop={(_, d) => {
-                const newX = d.x / 400;
-                const newY = d.y / (400 / containerRatio);
-                handleElementChange(el.id, {
-                  rect: { ...el.rect, x: newX, y: newY },
-                });
+      {/* Elements layer */}
+      {layout.elements.map((el) => (
+        <div
+          key={el.id}
+          className="absolute cursor-grab active:cursor-grabbing select-none"
+          onMouseDown={(e) => handleMouseDown(e, el)}
+          style={{
+            top: isNaN(el.y) ? 0 : el.y,
+            left: isNaN(el.x) ? 0 : el.x,
+            width: el.width || 120,
+            height: el.height || 120,
+          }}
+        >
+          {/* Image-ish elements */}
+          {(el.type === "logo" ||
+            el.type === "product" ||
+            el.type === "image") &&
+          el.imageUrl ? (
+            <Image
+              src={el.imageUrl}
+              alt={el.type}
+              width={el.width || 120}
+              height={el.height || 120}
+              className="object-contain pointer-events-none"
+            />
+          ) : null}
+
+          {/* Text-ish elements */}
+          {["text", "offer", "cta"].includes(el.type) && (
+            <p
+              style={{
+                fontSize: el.fontSize ?? layout.baseFontSize ?? 32,
+                color: el.color ?? "#ffffff",
+                fontFamily: "Inter, sans-serif",
               }}
-              onResizeStop={(_, __, ref, ___, pos) => {
-                const newW = ref.offsetWidth / 400;
-                const newH = ref.offsetHeight / (400 / containerRatio);
-                const newX = pos.x / 400;
-                const newY = pos.y / (400 / containerRatio);
-                handleElementChange(el.id, {
-                  rect: { x: newX, y: newY, w: newW, h: newH },
-                });
-              }}
-              enableResizing={el.type !== "logo" ? true : true}
             >
-              <div className="w-full h-full flex items-center justify-center">
-                {el.imageUrl ? (
-                  <img src={el.imageUrl} alt={el.type} className="w-full h-full object-contain" />
-                ) : (
-                  <span
-                    className="text-xs text-white px-1 text-center"
-                    style={{
-                      fontSize: el.fontSize ?? 16,
-                      fontWeight: el.fontWeight === "bold" ? 700 : 400,
-                    }}
-                  >
-                    {el.text}
-                  </span>
-                )}
-              </div>
-            </Rnd>
-          );
-        })}
-      </div>
+              {el.text}
+            </p>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

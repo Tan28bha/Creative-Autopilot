@@ -2,29 +2,64 @@ import { create } from "zustand";
 import type { BrandProfile, CreativeLayout } from "@/lib/types";
 
 type StudioState = {
-  brandProfile?: BrandProfile;
+  // BRAND PROFILE
+  brandProfile: BrandProfile | null;
   setBrandProfile: (bp: BrandProfile) => void;
 
+  // LAYOUTS
   layouts: CreativeLayout[];
   setLayouts: (layouts: CreativeLayout[]) => void;
-  updateLayout: (id: string, updater: (l: CreativeLayout) => CreativeLayout) => void;
 
-  selectedLayoutId?: string;
+  // SELECTED LAYOUT
+  selectedLayoutId: string | null;
   setSelectedLayoutId: (id: string) => void;
+
+  // UPDATE SINGLE LAYOUT
+  updateLayout: (
+    id: string,
+    fn: (layout: CreativeLayout) => CreativeLayout
+  ) => void;
+
+  // RESET
+  reset: () => void;
 };
 
 export const useStudioStore = create<StudioState>((set) => ({
-  brandProfile: undefined,
+  /** -----------------------------
+   * BRAND PROFILE
+   ------------------------------ */
+  brandProfile: null,
   setBrandProfile: (bp) => set({ brandProfile: bp }),
 
+  /** -----------------------------
+   * LAYOUTS (multiple sizes)
+   ------------------------------ */
   layouts: [],
   setLayouts: (layouts) => set({ layouts }),
 
-  updateLayout: (id, updater) =>
+  /** -----------------------------
+   * SELECTED LAYOUT ID
+   ------------------------------ */
+  selectedLayoutId: null,
+  setSelectedLayoutId: (id) => set({ selectedLayoutId: id }),
+
+  /** -----------------------------
+   * UPDATE ONE LAYOUT CLEANLY
+   ------------------------------ */
+  updateLayout: (id, fn) =>
     set((state) => ({
-      layouts: state.layouts.map((l) => (l.id === id ? updater(l) : l)),
+      layouts: state.layouts.map((layout) =>
+        layout.id === id ? fn(layout) : layout
+      ),
     })),
 
-  selectedLayoutId: undefined,
-  setSelectedLayoutId: (id) => set({ selectedLayoutId: id }),
+  /** -----------------------------
+   * RESET STUDIO
+   ------------------------------ */
+  reset: () =>
+    set({
+      brandProfile: null,
+      layouts: [],
+      selectedLayoutId: null,
+    }),
 }));
