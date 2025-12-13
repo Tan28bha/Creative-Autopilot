@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 import { useStudioStore } from "@/store/useStudioStore";
-import type { BrandProfile } from "@/lib/types";
+import type { BrandProfile, CreativeLayout } from "@/lib/types";
 
 import { generateBaseOfferLayout } from "@/lib/layoutTemplates";
 import { CreativeCanvas } from "@/components/CreativeCanvas";
 import { CompliancePanel } from "@/components/CompliancePanel";
 import { MultiFormatStep } from "@/components/MultiFormatStep";
-
-import { RightSidebar } from "@/components/RightSidebar"; // ✅ Correct import
+import { RightSidebar } from "@/components/RightSidebar";
 
 const tones = ["modern", "playful", "premium", "minimal"] as const;
 
@@ -49,6 +47,77 @@ export default function StudioPage() {
 
   const selectedLayout = layouts.find((l) => l.id === selectedLayoutId);
 
+  /* ---------------- AI LAYOUT (LLAMA) ---------------- */
+  async function handleGenerateAiLayout() {
+    if (!brandProfile) {
+      alert("Complete brand setup first");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/ai-generate-layout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand: brandProfile,
+          product: brandProfile.productUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        console.error(data);
+        alert("AI layout failed");
+        return;
+      }
+
+      // 🔐 HARDEN ELEMENTS (prevent compliance crash)
+      const safeElements =
+        Array.isArray(data.elements) ?
+          data.elements.map((el: any, i: number) => ({
+            id: el.id || `el-${i}`,
+            type: el.type || "text",
+            content: el.content || "",
+            rect: el.rect ?? {
+              x: 100,
+              y: 100 + i * 120,
+              width: 600,
+              height: 100,
+            },
+          })) : [];
+
+      const layout: CreativeLayout = {
+        id: data.id || "ai-layout",
+        name: data.name || "AI Layout",
+        width: data.width || 1080,
+        height: data.height || 1350,
+        brandPrimary: brandProfile.primaryColor,
+        brandSecondary: brandProfile.secondaryColor,
+        borderRadius: 24,
+        shadow: 28,
+        baseFontSize: 36,
+        backgroundUrl: data.backgroundUrl,
+        elements: safeElements,
+      };
+
+      setLayouts([layout]);
+      setSelectedLayoutId(layout.id);
+    } catch (err) {
+      console.error(err);
+      alert("Is Ollama running?");
+    }
+  }
+
+  /* ---------------- BASIC LAYOUT ---------------- */
+  function handleGenerateLayout() {
+    if (!brandProfile) return;
+
+    const layout = generateBaseOfferLayout(brandProfile);
+    setLayouts([layout]);
+    setSelectedLayoutId(layout.id);
+  }
+
+  /* ---------------- FILE UPLOAD ---------------- */
   function handleFileChange(
     e: React.ChangeEvent<HTMLInputElement>,
     type: "logo" | "product"
@@ -57,14 +126,13 @@ export default function StudioPage() {
     if (!file) return;
 
     const url = URL.createObjectURL(file);
-
-    if (type === "logo") setLogoPreview(url);
-    else setProductPreview(url);
+    type === "logo" ? setLogoPreview(url) : setProductPreview(url);
   }
 
+  /* ---------------- BRAND SETUP ---------------- */
   function handleCreateBrandProfile() {
     if (!name || !logoPreview) {
-      alert("Please enter brand name and upload a logo.");
+      alert("Brand name and logo required");
       return;
     }
 
@@ -83,234 +151,121 @@ export default function StudioPage() {
     setStep(2);
   }
 
-  function handleGenerateLayout() {
-    if (!brandProfile) {
-      alert("Please complete brand setup first.");
-      return;
-    }
-
-    const layout = generateBaseOfferLayout(brandProfile);
-
-    setLayouts([layout]);
-    setSelectedLayoutId(layout.id);
-
-    // remain on Step 2
-  }
-
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-6 flex flex-col gap-6">
-      {/* ⭐ RIGHT SIDEBAR (AI Background, Tools, etc.) */}
+    <main className="min-h-screen bg-slate-950 text-white p-6 space-y-6">
       <RightSidebar />
 
-      <header className="flex items-center justify-between">
+      <header className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Creative Autopilot Studio</h1>
         <p className="text-sm text-slate-400">Step {step} of 4</p>
       </header>
 
-      {/* STEP 1 — BRAND SETUP */}
+      {/* ================= STEP 1 ================= */}
       {step === 1 && (
         <section className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">1. Brand Setup</h2>
 
-            <div>
-              <label className="block text-sm mb-1 text-slate-300">
-                Brand Name
-              </label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-sm"
-                placeholder="Example: FreshBrew Coffee"
-              />
+            <input
+              placeholder="Brand name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded"
+            />
+
+            <input
+              placeholder="Tagline"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded"
+            />
+
+            <div className="flex gap-4">
+              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
+              <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} />
             </div>
 
-            <div>
-              <label className="block text-sm mb-1 text-slate-300">
-                Tagline (optional)
-              </label>
-              <input
-                value={tagline}
-                onChange={(e) => setTagline(e.target.value)}
-                className="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-sm"
-                placeholder="Example: Brewed with love"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1 text-slate-300">
-                  Primary Color
-                </label>
-                <input
-                  type="color"
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="w-full h-10 rounded-md border border-slate-700 bg-slate-900"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1 text-slate-300">
-                  Secondary Color
-                </label>
-                <input
-                  type="color"
-                  value={secondaryColor}
-                  onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="w-full h-10 rounded-md border border-slate-700 bg-slate-900"
-                />
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm mb-1 text-slate-300">Tone</p>
-              <div className="flex gap-2">
-                {tones.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTone(t)}
-                    className={`px-3 py-1 rounded-full text-xs capitalize border ${
-                      tone === t
-                        ? "border-violet-400 bg-violet-500/20"
-                        : "border-slate-700"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+            <div className="flex gap-2">
+              {tones.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTone(t)}
+                  className={`px-3 py-1 rounded border ${
+                    tone === t ? "bg-violet-500/20 border-violet-400" : "border-slate-700"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
             </div>
 
             <button
               onClick={handleCreateBrandProfile}
-              className="mt-4 px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-sm font-medium"
+              className="px-4 py-2 bg-violet-500 rounded"
             >
-              Continue to Layout
+              Continue
             </button>
           </div>
 
-          {/* Upload Assets */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-300">
-              Upload Assets
-            </h3>
+            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "logo")} />
+            {logoPreview && <img src={logoPreview} className="w-32 h-32 object-contain" />}
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* LOGO */}
-              <div>
-                <p className="text-xs text-slate-400 mb-1">Logo</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "logo")}
-                />
-                {logoPreview && (
-                  <div className="mt-2 w-32 h-32 relative bg-slate-900 border border-slate-700 rounded-md">
-                    <Image
-                      src={logoPreview}
-                      alt="logo"
-                      fill
-                      className="object-contain p-2"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* PRODUCT IMAGE */}
-              <div>
-                <p className="text-xs text-slate-400 mb-1">Product (optional)</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "product")}
-                />
-                {productPreview && (
-                  <div className="mt-2 w-32 h-32 relative bg-slate-900 border border-slate-700 rounded-md">
-                    <Image
-                      src={productPreview}
-                      alt="product"
-                      fill
-                      className="object-contain p-2"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "product")} />
+            {productPreview && <img src={productPreview} className="w-32 h-32 object-contain" />}
           </div>
         </section>
       )}
 
-      {/* STEP 2 — DESIGNER AGENT */}
+      {/* ================= STEP 2 ================= */}
       {step === 2 && (
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">
-              2. Designer Agent – Layout
-            </h2>
-
-            <button
-              onClick={handleGenerateLayout}
-              className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-sm"
-            >
-              Generate Layout
-            </button>
+          <div className="flex justify-between">
+            <h2 className="text-xl font-semibold">2. Designer Agent</h2>
+            <div className="flex gap-2">
+              <button onClick={handleGenerateLayout} className="bg-violet-500 px-4 py-2 rounded">
+                Basic Layout
+              </button>
+              <button onClick={handleGenerateAiLayout} className="bg-indigo-500 px-4 py-2 rounded">
+                AI Layout (Llama)
+              </button>
+            </div>
           </div>
 
           {selectedLayout && (
             <div className="grid md:grid-cols-[2fr,1fr] gap-6">
               <CreativeCanvas
                 layout={selectedLayout}
-                onChange={(updated) =>
-                  updateLayout(updated.id, () => updated)
-                }
+                onChange={(l) => updateLayout(l.id, () => l)}
               />
-
-              <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300">
-                <p className="font-semibold mb-1">Designer Agent</p>
-                <p>
-                  Drag, resize, and fine-tune elements to finalize your
-                  creative composition.
-                </p>
-
-                <button
-                  onClick={() => setStep(3)}
-                  className="mt-4 px-4 py-2 w-full rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm"
-                >
-                  Continue to Compliance
-                </button>
-              </div>
+              <button
+                onClick={() => setStep(3)}
+                className="bg-emerald-500 px-4 py-2 rounded h-fit"
+              >
+                Continue to Compliance
+              </button>
             </div>
           )}
         </section>
       )}
 
-      {/* STEP 3 — COMPLIANCE AGENT */}
+      {/* ================= STEP 3 ================= */}
       {step === 3 && selectedLayout && (
         <section className="grid md:grid-cols-[2fr,1fr] gap-6">
-          <div>
-            <h2 className="text-xl font-semibold">3. Compliance Agent</h2>
-
-            <CreativeCanvas
-              layout={selectedLayout}
-              onChange={(updated) =>
-                updateLayout(updated.id, () => updated)
-              }
-            />
-          </div>
-
+          <CreativeCanvas
+            layout={selectedLayout}
+            onChange={(l) => updateLayout(l.id, () => l)}
+          />
           <CompliancePanel
             layout={selectedLayout}
-            onAutoFix={(fixed) =>
-              updateLayout(fixed.id, () => fixed)
-            }
+            onAutoFix={(fixed) => updateLayout(fixed.id, () => fixed)}
             onNext={() => setStep(4)}
           />
         </section>
       )}
 
-      {/* STEP 4 — MULTI-FORMAT EXPORT */}
-      {step === 4 && selectedLayout && <MultiFormatStep />}
+      {/* ================= STEP 4 ================= */}
+      {step === 4 && <MultiFormatStep />}
     </main>
   );
 }
