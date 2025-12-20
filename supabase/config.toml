@@ -1,0 +1,10 @@
+project_id = "jkjopfhvbkdpvatxwajg"
+
+[functions.analyze-brand]
+verify_jwt = false
+
+[functions.generate-creative]
+verify_jwt = false
+
+[functions.edit-creative]
+verify_jwt = false
