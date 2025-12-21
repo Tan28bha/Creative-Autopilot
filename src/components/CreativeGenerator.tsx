@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Wand2, 
-  Loader2, 
-  Download, 
-  RefreshCw, 
+import {
+  Wand2,
+  Loader2,
+  Download,
+  RefreshCw,
   Image as ImageIcon,
   Layers,
   Pencil,
   Package,
   X,
-  Check
+  Check,
+  Shield,
+  AlertTriangle,
+  CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +37,20 @@ interface GeneratedCreative {
   description: string;
   format: string;
   style: string;
+  complianceResult?: ComplianceResult;
+}
+
+interface ComplianceResult {
+  overallScore: number;
+  compliant: boolean;
+  issues: Array<{
+    category: string;
+    severity: string;
+    issue: string;
+    recommendation: string;
+  }>;
+  recommendations: string[];
+  platformSpecific: Record<string, string>;
 }
 
 interface CreativeGeneratorProps {
@@ -209,6 +226,43 @@ export const CreativeGenerator = ({
       toast.error(message);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const checkCompliance = async (creative: GeneratedCreative) => {
+    setIsCheckingCompliance(true);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("check-compliance", {
+        body: {
+          imageUrl: creative.imageUrl,
+          brandGuidelines: brandAnalysis ? `Brand colors: ${brandAnalysis.primaryColors?.join(", ")}, Style: ${brandAnalysis.style}` : "",
+          targetAudience: "general",
+          platform: selectedFormat.name.toLowerCase().includes("instagram") ? "instagram" :
+                   selectedFormat.name.toLowerCase().includes("facebook") ? "facebook" :
+                   selectedFormat.name.toLowerCase().includes("twitter") ? "twitter" : "social_media"
+        },
+      });
+
+      if (fnError) throw fnError;
+      if (data.error) throw new Error(data.error);
+
+      // Update the creative with compliance result
+      setGeneratedCreatives(prev =>
+        prev.map(c =>
+          c.imageUrl === creative.imageUrl
+            ? { ...c, complianceResult: data }
+            : c
+        )
+      );
+
+      toast.success("Compliance check completed!");
+    } catch (err) {
+      console.error("Compliance check error:", err);
+      const message = err instanceof Error ? err.message : "Failed to check compliance";
+      toast.error(message);
+    } finally {
+      setIsCheckingCompliance(false);
     }
   };
 
@@ -562,6 +616,18 @@ export const CreativeGenerator = ({
                       <p className="text-xs text-muted-foreground">{creative.style}</p>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => checkCompliance(creative)}
+                        disabled={isCheckingCompliance}
+                        className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center hover:bg-orange-600 transition-colors disabled:opacity-50"
+                        title="Check compliance"
+                      >
+                        {isCheckingCompliance ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Shield className="w-4 h-4 text-white" />
+                        )}
+                      </button>
                       <button
                         onClick={() => {
                           setSelectedCreativeToEdit(creative);

@@ -12,10 +12,10 @@ serve(async (req) => {
 
   try {
     const { imageUrls, assetTypes } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+
+    if (!GOOGLE_AI_API_KEY) {
+      throw new Error("GOOGLE_AI_API_KEY is not configured");
     }
 
     if (!imageUrls || imageUrls.length === 0) {
@@ -24,24 +24,21 @@ serve(async (req) => {
 
     console.log("Analyzing brand assets:", { imageCount: imageUrls.length, assetTypes });
 
-    // Build the content array with images
-    const imageContent = imageUrls.map((url: string, index: number) => ({
-      type: "image_url",
-      image_url: { url },
-    }));
+    // Build the content array with images for Gemini API
+    const imageContent: any[] = [];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `You are a brand analyst AI. Analyze the provided brand assets and extract:
+    // Convert image URLs to base64 for Gemini API
+    for (const url of imageUrls) {
+      const imageData = await fetch(url).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+      imageContent.push({
+        inline_data: {
+          mime_type: "image/jpeg",
+          data: imageData
+        }
+      });
+    }
+
+    const prompt = `You are a brand analyst AI. Analyze the provided brand assets and extract:
 1. Primary and secondary brand colors (in hex format)
 2. Brand style characteristics (modern, classic, playful, professional, etc.)
 3. Typography style observations
@@ -49,19 +46,37 @@ serve(async (req) => {
 5. Overall brand personality
 6. Suggested creative directions for ad variations
 
-Provide your analysis in a structured JSON format.`,
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Analyze these brand assets (types: ${assetTypes.join(", ")}) and provide a comprehensive brand analysis with color palette, style characteristics, and creative suggestions.`,
-              },
-              ...imageContent,
-            ],
-          },
-        ],
+Provide your analysis in a structured JSON format with these exact keys:
+{
+  "primaryColors": ["#hex1", "#hex2"],
+  "secondaryColors": ["#hex3", "#hex4"],
+  "style": "modern/professional/etc",
+  "typography": "description of typography style",
+  "patterns": "description of visual patterns",
+  "personality": "overall brand personality",
+  "creativeDirections": ["suggestion1", "suggestion2"]
+}
+
+Respond with ONLY the JSON, no other text.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_AI_API_KEY}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            ...imageContent
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 2048,
+        }
       }),
     });
 
@@ -86,14 +101,14 @@ Provide your analysis in a structured JSON format.`,
     }
 
     const data = await response.json();
-    const analysisText = data.choices?.[0]?.message?.content || "";
-    
+    const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
     console.log("Brand analysis completed successfully");
 
     // Try to parse JSON from the response
     let analysis;
     try {
-      const jsonMatch = analysisText.match(/```json\n?([\s\S]*?)\n?```/) || 
+      const jsonMatch = analysisText.match(/```json\n?([\s\S]*?)\n?```/) ||
                         analysisText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[1] || jsonMatch[0]);

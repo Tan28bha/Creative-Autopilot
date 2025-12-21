@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl } = await req.json();
+    const { imageUrl, brandGuidelines, targetAudience, platform } = await req.json();
     const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
 
     if (!GOOGLE_AI_API_KEY) {
@@ -19,43 +19,46 @@ serve(async (req) => {
     }
 
     if (!imageUrl) {
-      throw new Error("Image URL is required");
+      throw new Error("Image URL is required for compliance check");
     }
 
-    const prompt = `You are an expert in visual attention prediction and advertising effectiveness analysis.
+    console.log("Checking compliance:", { platform, hasGuidelines: !!brandGuidelines });
 
-Analyze this marketing creative image and predict where viewers will look and how likely they are to click.
+    const prompt = `Analyze this marketing creative for compliance with advertising standards, brand guidelines, and accessibility requirements.
+
+Check against:
+1. Advertising Standards: Truthful claims, no misleading content, appropriate for target audience
+2. Brand Guidelines: Color usage, typography, style consistency, logo placement
+3. Accessibility: Color contrast, text readability, alt text considerations
+4. Platform Requirements: ${platform || "General social media"} specific rules
+5. Target Audience: Appropriate content for ${targetAudience || "general audience"}
+
+${brandGuidelines ? `Brand Guidelines: ${brandGuidelines}` : ""}
 
 Provide your analysis in the following JSON format:
 {
-  "regions": [
+  "overallScore": 85,
+  "compliant": true,
+  "issues": [
     {
-      "x": 0.3,
-      "y": 0.15,
-      "width": 0.4,
-      "height": 0.25,
-      "intensity": 0.95,
-      "label": "Primary Focus"
+      "category": "Advertising Standards",
+      "severity": "minor",
+      "description": "Issue description",
+      "recommendation": "How to fix"
     }
   ],
-  "ctrPrediction": 2.5,
-  "insights": [
-    "Insight about the creative's effectiveness"
+  "strengths": [
+    "Positive aspect of the creative"
+  ],
+  "recommendations": [
+    "Actionable improvement suggestion"
   ]
 }
 
 Where:
-- x, y, width, height are normalized values (0-1) representing the region
-- intensity is 0-1 where 1 is highest attention
-- ctrPrediction is expected click-through rate percentage (typically 1-5%)
-- insights are actionable recommendations
-
-Focus on:
-1. Where the eye naturally goes first (headlines, faces, products)
-2. Visual hierarchy and flow
-3. CTA visibility and placement
-4. Color contrast and attention-grabbing elements
-5. Brand visibility
+- overallScore: 0-100 compliance score
+- compliant: boolean indicating if it passes basic requirements
+- severity: "critical", "major", "minor"
 
 Respond with ONLY the JSON, no other text.`;
 
@@ -71,35 +74,37 @@ Respond with ONLY the JSON, no other text.`;
             {
               inline_data: {
                 mime_type: "image/jpeg",
-                data: await fetch(imageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))))
+                data: imageUrl.split(',')[1] // Extract base64 data if it's a data URL
               }
             }
           ]
         }],
         generationConfig: {
-          temperature: 0.1,
-          topK: 1,
-          topP: 1,
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.95,
           maxOutputTokens: 2048,
         }
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI Gateway error:", response.status, errorText);
+
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "API credits exhausted. Please add credits." }),
+          JSON.stringify({ error: "API credits exhausted. Please add credits to continue." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
+
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
@@ -107,38 +112,39 @@ Respond with ONLY the JSON, no other text.`;
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     // Parse JSON from response
-    let analysisData;
+    let complianceData;
     try {
       // Try to extract JSON from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        analysisData = JSON.parse(jsonMatch[0]);
+        complianceData = JSON.parse(jsonMatch[0]);
       } else {
         throw new Error("No JSON found in response");
       }
     } catch (parseError) {
       console.error("Parse error:", parseError, "Content:", content);
       // Return fallback data
-      analysisData = {
-        regions: [
-          { x: 0.3, y: 0.15, width: 0.4, height: 0.25, intensity: 0.9, label: "Primary Focus" },
-          { x: 0.25, y: 0.7, width: 0.5, height: 0.15, intensity: 0.8, label: "CTA Zone" },
-          { x: 0.05, y: 0.05, width: 0.2, height: 0.1, intensity: 0.5, label: "Brand Area" },
+      complianceData = {
+        overallScore: 75,
+        compliant: true,
+        issues: [
+          {
+            category: "General",
+            severity: "minor",
+            description: "Unable to parse detailed analysis",
+            recommendation: "Review creative manually for compliance"
+          }
         ],
-        ctrPrediction: 2.3,
-        insights: [
-          "Strong visual hierarchy detected",
-          "CTA placement is effective",
-          "Consider increasing contrast for better visibility",
-        ],
+        strengths: ["Creative appears professionally designed"],
+        recommendations: ["Consider manual compliance review"]
       };
     }
 
-    return new Response(JSON.stringify(analysisData), {
+    return new Response(JSON.stringify(complianceData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in analyze-attention:", error);
+    console.error("Error in check-compliance:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

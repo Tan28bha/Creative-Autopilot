@@ -64,8 +64,17 @@ const formatOptions = [
   },
 ];
 
-const LayoutsPage = () => {
+interface LayoutsPageProps {
+  brandAnalysis?: {
+    primaryColors?: string[];
+    secondaryColors?: string[];
+    style?: string;
+  } | null;
+}
+
+const LayoutsPage = ({ brandAnalysis }: LayoutsPageProps = {}) => {
   const [selectedFormats, setSelectedFormats] = useState<number[]>([0]);
+  const [activeTab, setActiveTab] = useState<"formats" | "ai-layout">("formats");
 
   const toggleFormat = (index: number) => {
     setSelectedFormats((prev) =>
