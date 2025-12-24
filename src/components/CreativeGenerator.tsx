@@ -105,18 +105,18 @@ export const CreativeGenerator = ({
       if (fnError) throw fnError;
       if (data.error) throw new Error(data.error);
 
-      if (data.imageUrl) {
+      if (data.imageUrl || data.description) {
         const newCreative: GeneratedCreative = {
-          imageUrl: data.imageUrl,
+          imageUrl: data.imageUrl || "https://placehold.co/600x400?text=Text+Description+Only",
           description: data.description || "",
           format: selectedFormat.name,
           style,
         };
         setGeneratedCreatives((prev) => [newCreative, ...prev]);
-        onPreviewUpdate?.(data.imageUrl);
-        toast.success("Creative generated!");
+        onPreviewUpdate?.(newCreative.imageUrl);
+        toast.success(data.imageUrl ? "Creative generated!" : "Creative description generated!");
       } else {
-        throw new Error("No image was generated");
+        throw new Error("No output generated");
       }
     } catch (err) {
       console.error("Generation error:", err);
@@ -156,18 +156,18 @@ export const CreativeGenerator = ({
       if (fnError) throw fnError;
       if (data.error) throw new Error(data.error);
 
-      if (data.imageUrl) {
+      if (data.imageUrl || data.description) {
         const newCreative: GeneratedCreative = {
-          imageUrl: data.imageUrl,
+          imageUrl: data.imageUrl || "https://placehold.co/600x400?text=Text+Description+Only",
           description: data.description || "",
           format: selectedFormat.name,
-          style: "Merged",
+          style,
         };
         setGeneratedCreatives((prev) => [newCreative, ...prev]);
-        onPreviewUpdate?.(data.imageUrl);
-        toast.success("Images merged successfully!");
+        onPreviewUpdate?.(newCreative.imageUrl);
+        toast.success(data.imageUrl ? "Creative generated!" : "Creative description generated!");
       } else {
-        throw new Error("No image was generated");
+        throw new Error("No output generated");
       }
     } catch (err) {
       console.error("Merge error:", err);
@@ -206,18 +206,18 @@ export const CreativeGenerator = ({
       if (fnError) throw fnError;
       if (data.error) throw new Error(data.error);
 
-      if (data.imageUrl) {
+      if (data.imageUrl || data.description) {
         const newCreative: GeneratedCreative = {
-          imageUrl: data.imageUrl,
+          imageUrl: data.imageUrl || "https://placehold.co/600x400?text=Text+Description+Only",
           description: data.description || "",
           format: selectedFormat.name,
           style: "Edited",
         };
         setGeneratedCreatives((prev) => [newCreative, ...prev]);
-        onPreviewUpdate?.(data.imageUrl);
-        toast.success("Creative edited!");
+        onPreviewUpdate?.(newCreative.imageUrl);
+        toast.success(data.imageUrl ? "Creative edited!" : "Creative edit description generated!");
       } else {
-        throw new Error("No image was generated");
+        throw new Error("No output generated");
       }
     } catch (err) {
       console.error("Edit error:", err);
@@ -239,8 +239,8 @@ export const CreativeGenerator = ({
           brandGuidelines: brandAnalysis ? `Brand colors: ${brandAnalysis.primaryColors?.join(", ")}, Style: ${brandAnalysis.style}` : "",
           targetAudience: "general",
           platform: selectedFormat.name.toLowerCase().includes("instagram") ? "instagram" :
-                   selectedFormat.name.toLowerCase().includes("facebook") ? "facebook" :
-                   selectedFormat.name.toLowerCase().includes("twitter") ? "twitter" : "social_media"
+            selectedFormat.name.toLowerCase().includes("facebook") ? "facebook" :
+              selectedFormat.name.toLowerCase().includes("twitter") ? "twitter" : "social_media"
         },
       });
 
@@ -280,33 +280,30 @@ export const CreativeGenerator = ({
       <div className="flex gap-1 p-1 bg-secondary rounded-lg">
         <button
           onClick={() => setMode("generate")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-            mode === "generate"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${mode === "generate"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Wand2 className="w-3.5 h-3.5" />
           Generate
         </button>
         <button
           onClick={() => setMode("merge")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-            mode === "merge"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${mode === "merge"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Layers className="w-3.5 h-3.5" />
           Merge
         </button>
         <button
           onClick={() => setMode("edit")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-            mode === "edit"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${mode === "edit"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Pencil className="w-3.5 h-3.5" />
           Edit
@@ -323,11 +320,10 @@ export const CreativeGenerator = ({
                 <button
                   key={style.id}
                   onClick={() => setSelectedStyle(style.id)}
-                  className={`p-2 rounded-lg border text-xs transition-all ${
-                    selectedStyle === style.id
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
+                  className={`p-2 rounded-lg border text-xs transition-all ${selectedStyle === style.id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50"
+                    }`}
                 >
                   {style.label}
                 </button>
@@ -351,11 +347,10 @@ export const CreativeGenerator = ({
                         selectedProductImage?.id === asset.id ? null : asset
                       )
                     }
-                    className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedProductImage?.id === asset.id
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${selectedProductImage?.id === asset.id
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <img
                       src={asset.url}
@@ -408,11 +403,10 @@ export const CreativeGenerator = ({
                   <button
                     key={asset.id}
                     onClick={() => setSelectedProductImage(asset)}
-                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedProductImage?.id === asset.id
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${selectedProductImage?.id === asset.id
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <img
                       src={asset.url}
@@ -445,11 +439,10 @@ export const CreativeGenerator = ({
                   <button
                     key={idx}
                     onClick={() => setSelectedCreativeToEdit(creative)}
-                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedCreativeToEdit?.imageUrl === creative.imageUrl
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${selectedCreativeToEdit?.imageUrl === creative.imageUrl
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <img
                       src={creative.imageUrl}
@@ -512,11 +505,10 @@ export const CreativeGenerator = ({
                   <button
                     key={idx}
                     onClick={() => setSelectedCreativeToEdit(creative)}
-                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedCreativeToEdit?.imageUrl === creative.imageUrl
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/50"
-                    }`}
+                    className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${selectedCreativeToEdit?.imageUrl === creative.imageUrl
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                      }`}
                   >
                     <img
                       src={creative.imageUrl}

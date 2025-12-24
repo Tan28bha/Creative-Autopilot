@@ -15,7 +15,11 @@ serve(async (req) => {
     const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
 
     if (!GOOGLE_AI_API_KEY) {
-      throw new Error("GOOGLE_AI_API_KEY is not configured");
+      console.error("GOOGLE_AI_API_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error: GOOGLE_AI_API_KEY is missing." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log("Generating creative:", { format, style, hasProductImage: !!productImageUrl });
@@ -23,7 +27,7 @@ serve(async (req) => {
     // Build prompt for image generation
     const colorPalette = brandAnalysis?.primaryColors?.join(", ") || "vibrant brand colors";
     const brandStyle = brandAnalysis?.style || "modern and professional";
-    
+
     let prompt = `Create a ${format || "social media"} advertisement creative with the following specifications:
 - Brand colors: ${colorPalette}
 - Style: ${brandStyle}, ${style || "clean and engaging"}
@@ -43,13 +47,21 @@ Ultra high resolution, professional advertising creative`;
 Ultra high resolution, professional advertising creative`;
     }
 
-    // Build messages array with optional image
-    const messageContent: any[] = [{ type: "text", text: prompt }];
-    
+    const imageContent: any[] = [];
+
     if (productImageUrl) {
-      messageContent.unshift({
-        type: "image_url",
-        image_url: { url: productImageUrl },
+      const productImageData = await (async () => {
+        if (productImageUrl.startsWith('data:')) {
+          return productImageUrl.split(',')[1];
+        } else {
+          return await fetch(productImageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+        }
+      })();
+      imageContent.push({
+        inline_data: {
+          mime_type: "image/jpeg",
+          data: productImageData
+        }
       });
     }
 
@@ -60,7 +72,10 @@ Ultra high resolution, professional advertising creative`;
       },
       body: JSON.stringify({
         contents: [{
-          parts: messageContent
+          parts: [
+            { text: prompt },
+            ...imageContent
+          ]
         }],
         generationConfig: {
           temperature: 0.7,
@@ -74,7 +89,7 @@ Ultra high resolution, professional advertising creative`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
@@ -87,7 +102,7 @@ Ultra high resolution, professional advertising creative`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 

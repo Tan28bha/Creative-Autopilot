@@ -4,6 +4,7 @@
 - [x] Update all Supabase functions to use direct Google Gemini API instead of Lovable gateway
 - [x] Replace LOVABLE_API_KEY with GOOGLE_AI_API_KEY environment variable
 - [x] Update API request formats to match Google Gemini API specifications
+- [x] Fix edit-creative function to use GOOGLE_AI_API_KEY consistently
 - [x] Test all existing AI functions (generate-creative, edit-creative, analyze-brand, analyze-attention)
 
 ## Phase 2: Add New AI Features ✅

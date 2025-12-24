@@ -29,7 +29,20 @@ serve(async (req) => {
 
     // Convert image URLs to base64 for Gemini API
     for (const url of imageUrls) {
-      const imageData = await fetch(url).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+      const imageData = await (async () => {
+        if (url.startsWith('data:')) {
+          return url.split(',')[1];
+        } else {
+          try {
+            return await fetch(url).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+          } catch (e) {
+            console.error(`Failed to fetch image: ${url}`, e);
+            return null;
+          }
+        }
+      })();
+
+      if (!imageData) continue;
       imageContent.push({
         inline_data: {
           mime_type: "image/jpeg",
@@ -83,7 +96,7 @@ Respond with ONLY the JSON, no other text.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
@@ -96,7 +109,7 @@ Respond with ONLY the JSON, no other text.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
@@ -109,7 +122,7 @@ Respond with ONLY the JSON, no other text.`;
     let analysis;
     try {
       const jsonMatch = analysisText.match(/```json\n?([\s\S]*?)\n?```/) ||
-                        analysisText.match(/\{[\s\S]*\}/);
+        analysisText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[1] || jsonMatch[0]);
       } else {

@@ -12,27 +12,33 @@ serve(async (req) => {
 
   try {
     const { creativeImageUrl, productImageUrl, editInstruction, brandAnalysis } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+
+    if (!GOOGLE_AI_API_KEY) {
+      throw new Error("GOOGLE_AI_API_KEY is not configured");
     }
 
     if (!creativeImageUrl && !productImageUrl) {
       throw new Error("At least one image URL is required");
     }
 
-    console.log("Editing/merging creative:", { 
-      hasCreative: !!creativeImageUrl, 
+    console.log("Editing/merging creative:", {
+      hasCreative: !!creativeImageUrl,
       hasProduct: !!productImageUrl,
-      instruction: editInstruction 
+      instruction: editInstruction
     });
 
     // Build the content array with images
     const imageContent: any[] = [];
 
     if (creativeImageUrl) {
-      const creativeImageData = await fetch(creativeImageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+      const creativeImageData = await (async () => {
+        if (creativeImageUrl.startsWith('data:')) {
+          return creativeImageUrl.split(',')[1];
+        } else {
+          return await fetch(creativeImageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+        }
+      })();
       imageContent.push({
         inline_data: {
           mime_type: "image/jpeg",
@@ -42,7 +48,13 @@ serve(async (req) => {
     }
 
     if (productImageUrl) {
-      const productImageData = await fetch(productImageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+      const productImageData = await (async () => {
+        if (productImageUrl.startsWith('data:')) {
+          return productImageUrl.split(',')[1];
+        } else {
+          return await fetch(productImageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+        }
+      })();
       imageContent.push({
         inline_data: {
           mime_type: "image/jpeg",
@@ -54,9 +66,9 @@ serve(async (req) => {
     // Build prompt based on context
     const colorPalette = brandAnalysis?.primaryColors?.join(", ") || "brand colors";
     const brandStyle = brandAnalysis?.style || "professional";
-    
+
     let prompt = editInstruction || "";
-    
+
     if (creativeImageUrl && productImageUrl) {
       prompt = `Merge these images: Place the product from the second image naturally into the first creative/background image. ${editInstruction || "Blend them seamlessly while maintaining brand consistency."}
 Style: ${brandStyle}
@@ -96,7 +108,7 @@ Maintain brand consistency and professional quality.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
@@ -109,7 +121,7 @@ Maintain brand consistency and professional quality.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
@@ -124,7 +136,7 @@ Maintain brand consistency and professional quality.`;
     console.log("Edit/merge completed", { hasImage: !!generatedImage });
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         imageUrl: generatedImage,
         description: textContent,
       }),

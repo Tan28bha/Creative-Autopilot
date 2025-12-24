@@ -74,7 +74,13 @@ Respond with ONLY the JSON, no other text.`;
             {
               inline_data: {
                 mime_type: "image/jpeg",
-                data: imageUrl.split(',')[1] // Extract base64 data if it's a data URL
+                data: await (async () => {
+                  if (imageUrl.startsWith('data:')) {
+                    return imageUrl.split(',')[1];
+                  } else {
+                    return await fetch(imageUrl).then(r => r.arrayBuffer()).then(b => btoa(String.fromCharCode(...new Uint8Array(b))));
+                  }
+                })()
               }
             }
           ]
