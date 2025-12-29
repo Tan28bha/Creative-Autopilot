@@ -56,6 +56,14 @@ If you're seeing "Failed to send a request to the Edge Function", the Edge Funct
 
 The Edge Functions need the `GOOGLE_AI_API_KEY` environment variable.
 
+### Required Secrets:
+
+1. **GOOGLE_AI_API_KEY** - For text analysis and descriptions (optional but recommended)
+
+### Image Generation:
+
+The `generate-creative` function uses **Hugging Face Inference API** for image generation. An API key is optional but recommended for better rate limits.
+
 ### Using Supabase Dashboard:
 
 1. **Go to Edge Functions:**
@@ -64,16 +72,25 @@ The Edge Functions need the `GOOGLE_AI_API_KEY` environment variable.
 2. **Set Environment Variables:**
    - Click on **Settings** or **Project Settings**
    - Go to **Edge Functions** → **Secrets**
-   - Add a new secret:
+   - Add secrets:
      - **Name:** `GOOGLE_AI_API_KEY`
-     - **Value:** Your Google AI API key (from your `.env.local` file: `AIzaSyC0Top4I0XKt3_BF17VK-C9ov4U6utwMic`)
-   - Click **Save**
+       - **Value:** Your Google AI API key (from your `.env.local` file)
+     - **Name:** `REPLICATE_API_TOKEN`
+       - **Value:** Your Replicate API token (get it from https://replicate.com/account/api-tokens)
+   - Click **Save** for each
 
 ### Using Supabase CLI:
 
 ```bash
-supabase secrets set GOOGLE_AI_API_KEY=AIzaSyC0Top4I0XKt3_BF17VK-C9ov4U6utwMic
+supabase secrets set GOOGLE_AI_API_KEY=your_google_ai_key_here
 ```
+
+**Optional (Recommended):** For better rate limits, you can also set `HUGGINGFACE_API_KEY`:
+```bash
+supabase secrets set HUGGINGFACE_API_KEY=your_hf_token_here
+```
+
+Get your free token at: https://huggingface.co/settings/tokens
 
 ## Step 3: Verify Function Configuration
 
@@ -87,8 +104,8 @@ supabase secrets set GOOGLE_AI_API_KEY=AIzaSyC0Top4I0XKt3_BF17VK-C9ov4U6utwMic
      - `check-compliance`
 
 2. **Verify Environment Variables:**
-   - In Edge Functions settings, verify `GOOGLE_AI_API_KEY` is set
-   - Make sure it matches the key in your `.env.local` file
+   - In Edge Functions settings, verify `GOOGLE_AI_API_KEY` is set (optional but recommended for descriptions)
+   - `HUGGINGFACE_API_KEY` is optional but recommended for better image generation rate limits
 
 ## Step 4: Test the Functions
 
@@ -116,6 +133,12 @@ After deployment, test the brand analysis:
 - The environment variable isn't set in Supabase
 - Set it in Edge Functions → Settings → Secrets
 
+### "Hugging Face API error" or "Image generation failed"
+- Image generation uses Hugging Face Inference API
+- If you see rate limit errors, get a free API key at https://huggingface.co/settings/tokens
+- Set `HUGGINGFACE_API_KEY` in Edge Functions secrets for better rate limits
+- Some models may take time to load on first use (automatic retry is built-in)
+
 ### "Failed to send a request"
 - Check your Supabase URL in `.env.local` matches your project
 - Verify the function is deployed and active
@@ -128,12 +151,15 @@ After deployment, test the brand analysis:
 ## Quick Checklist
 
 - [ ] Edge Functions deployed to Supabase
-- [ ] `GOOGLE_AI_API_KEY` set in Supabase Edge Functions secrets
+- [ ] `GOOGLE_AI_API_KEY` set in Supabase Edge Functions secrets (optional, for descriptions)
 - [ ] `.env.local` file has correct Supabase URL and keys
 - [ ] Dev server restarted after changes
 - [ ] Tested brand analysis function
+- [ ] Tested creative generation (uses Hugging Face - API key optional but recommended)
 
-## Getting Your Google AI API Key
+## Getting Your API Keys
+
+### Google AI API Key
 
 If you don't have a Google AI API key:
 
@@ -143,4 +169,27 @@ If you don't have a Google AI API key:
 4. Add it to:
    - Your `.env.local` file: `GOOGLE_AI_API_KEY=your-key-here`
    - Supabase Edge Functions secrets (as shown above)
+
+### Image Generation with Hugging Face (FREE - API Key Optional!)
+
+The `generate-creative` function uses **Hugging Face Inference API** for image generation:
+- ✅ **Free tier available** - Works without API key (with rate limits)
+- ✅ **Better with API key** - Free token at https://huggingface.co/settings/tokens
+- ✅ **High quality** - Uses Stable Diffusion XL model
+- ✅ **Backend compatible** - Works from Edge Functions
+
+**Setup (Optional but Recommended):**
+
+1. **Get a free Hugging Face token:**
+   - Go to https://huggingface.co/settings/tokens
+   - Click **New token**
+   - Select **Read** access
+   - Copy the token
+
+2. **Add to Supabase:**
+   - Go to Edge Functions → Settings → Secrets
+   - Add: `HUGGINGFACE_API_KEY` = your token
+   - Redeploy the function
+
+**Note:** The function works without an API key, but you'll have better rate limits with one (and it's completely free!).
 

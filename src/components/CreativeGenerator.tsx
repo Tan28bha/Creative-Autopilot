@@ -76,6 +76,7 @@ export const CreativeGenerator = ({
   onPreviewUpdate,
 }: CreativeGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [checkingComplianceFor, setCheckingComplianceFor] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState("bold");
   const [generatedCreatives, setGeneratedCreatives] = useState<GeneratedCreative[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -230,7 +231,7 @@ export const CreativeGenerator = ({
   };
 
   const checkCompliance = async (creative: GeneratedCreative) => {
-    setIsCheckingCompliance(true);
+    setCheckingComplianceFor(creative.imageUrl);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("check-compliance", {
@@ -262,7 +263,7 @@ export const CreativeGenerator = ({
       const message = err instanceof Error ? err.message : "Failed to check compliance";
       toast.error(message);
     } finally {
-      setIsCheckingCompliance(false);
+      setCheckingComplianceFor(null);
     }
   };
 
@@ -610,11 +611,11 @@ export const CreativeGenerator = ({
                     <div className="flex gap-2">
                       <button
                         onClick={() => checkCompliance(creative)}
-                        disabled={isCheckingCompliance}
+                        disabled={checkingComplianceFor === creative.imageUrl}
                         className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center hover:bg-orange-600 transition-colors disabled:opacity-50"
                         title="Check compliance"
                       >
-                        {isCheckingCompliance ? (
+                        {checkingComplianceFor === creative.imageUrl ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <Shield className="w-4 h-4 text-white" />
