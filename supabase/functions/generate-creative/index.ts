@@ -102,10 +102,10 @@ serve(async (req) => {
         height = 1080;
       }
 
-      // Use Stable Diffusion XL model via Hugging Face
-      // Try router endpoint first, fallback to alternative if needed
-      const model = "stabilityai/stable-diffusion-xl-base-1.0";
-      const hfUrl = `https://router.huggingface.co/models/${model}`;
+      // Use Flux model via Hugging Face for higher quality results
+      // Flux produces more photorealistic and detailed images
+      const model = "black-forest-labs/FLUX.1-schnell";
+      const hfUrl = `https://api-inference.huggingface.co/models/${model}`;
 
       console.log("Setting up API request...");
       const headers: Record<string, string> = {
