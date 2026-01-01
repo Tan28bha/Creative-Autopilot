@@ -100,6 +100,7 @@ export const CreativeGenerator = ({
           format: selectedFormat.name,
           style,
           productImageUrl: selectedProductImage?.url,
+          assets,
         },
       });
 
