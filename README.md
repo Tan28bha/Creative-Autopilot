@@ -1,14 +1,3 @@
-Perfect 👍
-Below is an **enhanced, hackathon-ready + recruiter-friendly README** with:
-
-* ✅ **Badges (build, license, tech stack)**
-* 📸 **Screenshots & Demo GIF sections (placeholders + structure)**
-* 🏆 **Judging-optimized storytelling (Problem → Innovation → Impact)**
-
-You can **copy-paste this directly as `README.md`** and just replace image links later.
-
----
-
 # 🚀 Creative Autopilot
 
 ### *AI-Powered Creative Automation Platform*
