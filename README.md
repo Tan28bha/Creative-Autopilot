@@ -74,8 +74,6 @@ Creative Autopilot introduces:
 
 ## 📸 Screenshots
 
-> *(Replace image paths with actual screenshots later)*
-
 (<img width="1881" height="837" alt="Screenshot 2026-01-02 201234" src="https://github.com/user-attachments/assets/eb50ea68-edb5-478c-a862-d134821f3ad9" />
 )
 
