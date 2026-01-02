@@ -158,6 +158,220 @@ supabase functions deploy
 
 ---
 
+Short answer: **❌ Not fully yet.**
+Good news: **it SHOULD be added**, and I’ll give you **exact ready-to-paste sections** now.
+
+For **hackathons, recruiters, and open-source**, these 3 sections are **mandatory**:
+
+* ✅ Setup Steps
+* ✅ Usage Instructions
+* ✅ Dependencies
+
+Below is the **final polished version** you can drop straight into your `README.md`.
+
+---
+
+# ⚙️ Setup & Installation
+
+## Prerequisites
+
+Make sure you have the following installed:
+
+* **Node.js** `>= 18`
+* **npm** or **pnpm**
+* **Supabase CLI**
+* A **Supabase account**
+* API keys for AI services (listed below)
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+GOOGLE_AI_API_KEY=your_gemini_api_key
+NSCALE_API_KEY=your_nscale_api_key
+STABILITY_API_KEY=your_stability_api_key   # optional
+HUGGINGFACE_API_KEY=your_hf_api_key        # optional
+```
+
+> ⚠️ Never commit `.env` files to GitHub.
+
+---
+
+## 📦 Dependencies
+
+### Frontend
+
+* React 18
+* TypeScript
+* Vite
+* Tailwind CSS
+* shadcn/ui (Radix UI)
+* Framer Motion
+* Fabric.js
+* React Query
+* React Hook Form + Zod
+
+### Backend
+
+* Supabase (PostgreSQL + Auth)
+* Supabase Edge Functions (Deno)
+
+### AI / ML Services
+
+* Google Gemini Vision API
+* FLUX.1 (via NScale)
+* Stability AI SD3 (optional)
+* Hugging Face Inference API (fallback)
+
+---
+
+## 🛠️ Local Setup Steps
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/your-username/creative-autopilot.git
+cd creative-autopilot
+```
+
+---
+
+### 2️⃣ Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 3️⃣ Start the frontend
+
+```bash
+npm run dev
+```
+
+App will be available at:
+
+```
+http://localhost:5173
+```
+
+---
+
+### 4️⃣ Setup Supabase
+
+```bash
+supabase login
+supabase init
+supabase start
+```
+
+---
+
+### 5️⃣ Deploy Edge Functions
+
+```bash
+supabase functions deploy
+```
+
+---
+
+## ▶️ Usage Instructions
+
+### Step 1: Authentication
+
+* Sign up / login using email & password
+* Supabase handles session management
+
+---
+
+### Step 2: Upload Brand Assets
+
+* Upload logos, packshots, or past creatives
+* Assets are stored securely in Supabase Storage
+* Brand Analyzer extracts:
+
+  * Colors
+  * Typography
+  * Visual style
+  * Brand personality
+
+---
+
+### Step 3: Generate Creatives
+
+* Choose creative style
+* (Optional) Select product image
+* AI generates multiple creative variations
+* Powered by FLUX.1 / SD3
+
+---
+
+### Step 4: Edit & Customize
+
+* Open creative in Canvas Editor
+* Drag & drop layers
+* Edit text, resize elements
+* Merge products into backgrounds
+* Regenerate variations if needed
+
+---
+
+### Step 5: Compliance & Quality Check
+
+* Run auto compliance check
+* View platform readiness
+* See quality score breakdown:
+
+  * Visual hierarchy
+  * Brand consistency
+  * Readability
+  * Platform fitness
+
+---
+
+### Step 6: Export
+
+* Select output platforms (Instagram, Facebook, etc.)
+* Download optimized creatives
+* Correct dimensions & size (<500KB)
+
+---
+
+## 🧪 Development Scripts
+
+```bash
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run preview    # Preview production build
+npm run lint       # Run ESLint
+```
+
+---
+
+## 🧠 Troubleshooting
+
+### Image generation is slow?
+
+* FLUX.1 takes 10–30 seconds
+* Check API rate limits
+* Verify API keys
+
+### Supabase functions failing?
+
+* Ensure `.env` variables are set
+* Run `supabase functions serve` locally
+* Check Supabase logs
+
+---
+
+
 ## 🚀 Roadmap
 
 ### Short-Term
