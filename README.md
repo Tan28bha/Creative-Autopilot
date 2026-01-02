@@ -87,41 +87,11 @@ Creative Autopilot introduces:
 
 > *(Replace image paths with actual screenshots later)*
 
-### 🏠 Landing Page
+(<img width="1881" height="837" alt="Screenshot 2026-01-02 201234" src="https://github.com/user-attachments/assets/eb50ea68-edb5-478c-a862-d134821f3ad9" />
+)
 
-![Landing Page](./screenshots\Screenshot 2026-01-02 201234.png)
-
-### 🎨 Brand Analyzer
-
-![Brand Analyzer](./screenshots/brand-analyzer.png)
-
-### 🧠 AI Creative Studio
-
-![Creative Studio](./screenshots/creative-studio.png)
-
-### 🖌️ Canvas Editor
-
-![Canvas Editor](./screenshots/canvas-editor.png)
-
-### 📊 Quality Scoring Panel
-
-![Quality Score](./screenshots/quality-score.png)
-
----
-
-## 🎥 Demo GIFs (Highly Recommended for Hackathons)
-
-### ⚡ Generate Creative in Seconds
-
-![Generate Demo](./demos/generate.gif)
-
-### 🧩 Edit & Merge Products
-
-![Edit Demo](./demos/edit.gif)
-
-### 🛡️ Compliance & Scoring
-
-![Compliance Demo](./demos/compliance.gif)
+<img width="1857" height="857" alt="Screenshot 2026-01-02 201340" src="https://github.com/user-attachments/assets/627d0efd-e690-401b-ba0e-769dd6211159" />
+<img width="1801" height="880" alt="Screenshot 2026-01-02 201358" src="https://github.com/user-attachments/assets/203bff0d-a66a-4154-9b39-4f4c1db1eb25" />
 
 ---
 
@@ -172,24 +142,10 @@ Frontend (React + Vite)
 
 ---
 
-## 🔐 Environment Variables
-
-```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-
-GOOGLE_AI_API_KEY=
-NSCALE_API_KEY=
-STABILITY_API_KEY=      # optional
-HUGGINGFACE_API_KEY=   # optional
-```
-
----
-
 ## ⚙️ Local Setup
 
 ```bash
-git clone https://github.com/your-username/creative-autopilot.git
+git clone https://github.com/Tan28bha/Creative-Autopilot
 cd creative-autopilot
 npm install
 npm run dev
@@ -253,20 +209,11 @@ MIT License © 2026
 
 ---
 
-## 🙌 Final Note (Judges ❤️ This)
+## 🙌 Final Note
 
 > **Creative Autopilot is not just an AI image generator.**
 > It is a **creative intelligence system** that understands brands, follows rules, evaluates quality, and scales marketing creativity autonomously.
 
 ---
 
-### 👉 Want Next?
 
-I can:
-
-* Add **Hackathon Pitch Section (Problem → Solution → Tech → Impact)**
-* Write a **1-minute demo script**
-* Generate **screenshots mockups**
-* Create a **README.md specifically optimized for Devfolio / Unstop / GitHub Stars**
-
-Just say the word 🚀
