@@ -158,19 +158,6 @@ supabase functions deploy
 
 ---
 
-Short answer: **❌ Not fully yet.**
-Good news: **it SHOULD be added**, and I’ll give you **exact ready-to-paste sections** now.
-
-For **hackathons, recruiters, and open-source**, these 3 sections are **mandatory**:
-
-* ✅ Setup Steps
-* ✅ Usage Instructions
-* ✅ Dependencies
-
-Below is the **final polished version** you can drop straight into your `README.md`.
-
----
-
 # ⚙️ Setup & Installation
 
 ## Prerequisites
@@ -236,7 +223,7 @@ HUGGINGFACE_API_KEY=your_hf_api_key        # optional
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone https://github.com/your-username/creative-autopilot.git
+git clone https://github.com/Tan28bha/Creative-Autopilot.git
 cd creative-autopilot
 ```
 
@@ -259,7 +246,7 @@ npm run dev
 App will be available at:
 
 ```
-http://localhost:5173
+http://localhost:8080
 ```
 
 ---
