@@ -29,6 +29,13 @@ const GeneratePage = () => {
   const [brandAnalysis, setBrandAnalysis] = useState<BrandAnalysis | null>(null);
   const [generatedPreview, setGeneratedPreview] = useState<string | null>(null);
 
+  // Store generated image in localStorage when preview is updated
+  useEffect(() => {
+    if (generatedPreview) {
+      localStorage.setItem("generatedCreativeImage", generatedPreview);
+    }
+  }, [generatedPreview]);
+
   useEffect(() => {
     const fetchAssets = async () => {
       const { data } = await supabase
@@ -87,7 +94,12 @@ const GeneratePage = () => {
                 brandAnalysis={brandAnalysis}
                 selectedFormat={{ name: "Instagram Story", size: "1080×1920" }}
                 assets={assets}
-                onPreviewUpdate={(imageUrl) => setGeneratedPreview(imageUrl)}
+                onPreviewUpdate={(imageUrl) => {
+                  setGeneratedPreview(imageUrl);
+                  if (imageUrl) {
+                    localStorage.setItem("generatedCreativeImage", imageUrl);
+                  }
+                }}
               />
             </div>
 
@@ -97,7 +109,12 @@ const GeneratePage = () => {
                 brandAnalysis={brandAnalysis}
                 format={{ name: "Instagram Story", size: "1080×1920" }}
                 productImageUrl={undefined}
-                onSelectVariation={(imageUrl) => setGeneratedPreview(imageUrl)}
+                onSelectVariation={(imageUrl) => {
+                  setGeneratedPreview(imageUrl);
+                  if (imageUrl) {
+                    localStorage.setItem("generatedCreativeImage", imageUrl);
+                  }
+                }}
                 selectedVariation={generatedPreview}
               />
             </div>

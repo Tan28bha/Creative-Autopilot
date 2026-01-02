@@ -13,11 +13,16 @@ import {
   Check,
   Shield,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Star,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { QualityScoreDisplay } from "@/components/QualityScoreDisplay";
 
 interface BrandAnalysis {
   primaryColors?: string[];
@@ -38,6 +43,7 @@ interface GeneratedCreative {
   format: string;
   style: string;
   complianceResult?: ComplianceResult;
+  qualityScore?: QualityScoreResult;
 }
 
 interface ComplianceResult {
@@ -51,6 +57,16 @@ interface ComplianceResult {
   }>;
   recommendations: string[];
   platformSpecific: Record<string, string>;
+}
+
+interface QualityScoreResult {
+  creativeScore: number;
+  visualHierarchy: number;
+  brandConsistency: number;
+  textReadability: number;
+  platformFitness: number;
+  strengths: string[];
+  improvements: string[];
 }
 
 interface CreativeGeneratorProps {
@@ -77,6 +93,7 @@ export const CreativeGenerator = ({
 }: CreativeGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [checkingComplianceFor, setCheckingComplianceFor] = useState<string | null>(null);
+  const [scoringQualityFor, setScoringQualityFor] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState("bold");
   const [generatedCreatives, setGeneratedCreatives] = useState<GeneratedCreative[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +101,7 @@ export const CreativeGenerator = ({
   const [selectedProductImage, setSelectedProductImage] = useState<BrandAsset | null>(null);
   const [selectedCreativeToEdit, setSelectedCreativeToEdit] = useState<GeneratedCreative | null>(null);
   const [editInstruction, setEditInstruction] = useState("");
+  const [autoComplianceCheck, setAutoComplianceCheck] = useState(true);
 
   const productAssets = assets.filter((a) => a.asset_type === "packshot" || a.asset_type === "other");
 
@@ -117,6 +135,11 @@ export const CreativeGenerator = ({
         setGeneratedCreatives((prev) => [newCreative, ...prev]);
         onPreviewUpdate?.(newCreative.imageUrl);
         toast.success(data.imageUrl ? "Creative generated!" : "Creative description generated!");
+        
+        // Auto-compliance check if enabled
+        if (autoComplianceCheck && data.imageUrl) {
+          await checkCompliance(newCreative);
+        }
       } else {
         throw new Error("No output generated");
       }
@@ -163,11 +186,16 @@ export const CreativeGenerator = ({
           imageUrl: data.imageUrl || "https://placehold.co/600x400?text=Text+Description+Only",
           description: data.description || "",
           format: selectedFormat.name,
-          style,
+          style: creativeToMerge?.style || "Merged",
         };
         setGeneratedCreatives((prev) => [newCreative, ...prev]);
         onPreviewUpdate?.(newCreative.imageUrl);
         toast.success(data.imageUrl ? "Creative generated!" : "Creative description generated!");
+        
+        // Auto-compliance check if enabled
+        if (autoComplianceCheck && data.imageUrl) {
+          await checkCompliance(newCreative);
+        }
       } else {
         throw new Error("No output generated");
       }
@@ -218,6 +246,11 @@ export const CreativeGenerator = ({
         setGeneratedCreatives((prev) => [newCreative, ...prev]);
         onPreviewUpdate?.(newCreative.imageUrl);
         toast.success(data.imageUrl ? "Creative edited!" : "Creative edit description generated!");
+        
+        // Auto-compliance check if enabled
+        if (autoComplianceCheck && data.imageUrl) {
+          await checkCompliance(newCreative);
+        }
       } else {
         throw new Error("No output generated");
       }
@@ -268,6 +301,42 @@ export const CreativeGenerator = ({
     }
   };
 
+  const scoreQuality = async (creative: GeneratedCreative) => {
+    setScoringQualityFor(creative.imageUrl);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("score-creative", {
+        body: {
+          imageUrl: creative.imageUrl,
+          brandGuidelines: brandAnalysis ? `Brand colors: ${brandAnalysis.primaryColors?.join(", ")}, Style: ${brandAnalysis.style}` : "",
+          platform: selectedFormat.name.toLowerCase().includes("instagram") ? "instagram" :
+            selectedFormat.name.toLowerCase().includes("facebook") ? "facebook" :
+              selectedFormat.name.toLowerCase().includes("twitter") ? "twitter" : "social_media"
+        },
+      });
+
+      if (fnError) throw fnError;
+      if (data.error) throw new Error(data.error);
+
+      // Update the creative with quality score
+      setGeneratedCreatives(prev =>
+        prev.map(c =>
+          c.imageUrl === creative.imageUrl
+            ? { ...c, qualityScore: data }
+            : c
+        )
+      );
+
+      toast.success(`Quality score: ${data.creativeScore}/100`);
+    } catch (err) {
+      console.error("Quality scoring error:", err);
+      const message = err instanceof Error ? err.message : "Failed to score creative quality";
+      toast.error(message);
+    } finally {
+      setScoringQualityFor(null);
+    }
+  };
+
   const downloadCreative = (imageUrl: string, index: number) => {
     const link = document.createElement("a");
     link.href = imageUrl;
@@ -310,6 +379,21 @@ export const CreativeGenerator = ({
           <Pencil className="w-3.5 h-3.5" />
           Edit
         </button>
+      </div>
+
+      {/* Auto-Compliance Check Toggle */}
+      <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 text-primary" />
+          <Label htmlFor="auto-compliance" className="text-sm font-medium cursor-pointer">
+            Auto-compliance check
+          </Label>
+        </div>
+        <Switch
+          id="auto-compliance"
+          checked={autoComplianceCheck}
+          onCheckedChange={setAutoComplianceCheck}
+        />
       </div>
 
       {/* Generate Mode */}
@@ -592,56 +676,83 @@ export const CreativeGenerator = ({
             </h4>
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {generatedCreatives.map((creative, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="relative group rounded-xl overflow-hidden border border-border"
-                >
-                  <img
-                    src={creative.imageUrl}
-                    alt={`Generated ${creative.format}`}
-                    className="w-full aspect-video object-cover cursor-pointer"
-                    onClick={() => onPreviewUpdate?.(creative.imageUrl)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
-                    <div>
-                      <p className="text-xs font-medium">{creative.format}</p>
-                      <p className="text-xs text-muted-foreground">{creative.style}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => checkCompliance(creative)}
-                        disabled={checkingComplianceFor === creative.imageUrl}
-                        className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center hover:bg-orange-600 transition-colors disabled:opacity-50"
-                        title="Check compliance"
-                      >
-                        {checkingComplianceFor === creative.imageUrl ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Shield className="w-4 h-4 text-white" />
+                <div key={index} className="space-y-2">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative group rounded-xl overflow-hidden border border-border"
+                  >
+                    <img
+                      src={creative.imageUrl}
+                      alt={`Generated ${creative.format}`}
+                      className="w-full aspect-video object-cover cursor-pointer"
+                      onClick={() => onPreviewUpdate?.(creative.imageUrl)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
+                      <div>
+                        <p className="text-xs font-medium">{creative.format}</p>
+                        <p className="text-xs text-muted-foreground">{creative.style}</p>
+                        {creative.qualityScore && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                            <span className="text-xs font-semibold text-foreground">
+                              {creative.qualityScore.creativeScore}/100
+                            </span>
+                          </div>
                         )}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedCreativeToEdit(creative);
-                          setMode("edit");
-                        }}
-                        className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
-                        title="Edit this creative"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => downloadCreative(creative.imageUrl, index)}
-                        className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/80 transition-colors"
-                        title="Download"
-                      >
-                        <Download className="w-4 h-4 text-primary-foreground" />
-                      </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => scoreQuality(creative)}
+                          disabled={scoringQualityFor === creative.imageUrl}
+                          className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center hover:bg-purple-600 transition-colors disabled:opacity-50"
+                          title="Score quality"
+                        >
+                          {scoringQualityFor === creative.imageUrl ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          ) : (
+                            <Star className="w-4 h-4 text-white" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => checkCompliance(creative)}
+                          disabled={checkingComplianceFor === creative.imageUrl}
+                          className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center hover:bg-orange-600 transition-colors disabled:opacity-50"
+                          title="Check compliance"
+                        >
+                          {checkingComplianceFor === creative.imageUrl ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          ) : (
+                            <Shield className="w-4 h-4 text-white" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedCreativeToEdit(creative);
+                            setMode("edit");
+                          }}
+                          className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                          title="Edit this creative"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => downloadCreative(creative.imageUrl, index)}
+                          className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/80 transition-colors"
+                          title="Download"
+                        >
+                          <Download className="w-4 h-4 text-primary-foreground" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                  {/* Quality Score Display */}
+                  {creative.qualityScore && (
+                    <div className="px-1">
+                      <QualityScoreDisplay score={creative.qualityScore} />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </motion.div>

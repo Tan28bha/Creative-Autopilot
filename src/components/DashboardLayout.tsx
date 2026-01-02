@@ -6,9 +6,13 @@ import {
   Layers,
   Download,
   Wand2,
-  Check
+  Check,
+  LogOut
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const steps = [
   { icon: Upload, label: "Upload", path: "/dashboard/upload", step: 1 },
@@ -26,6 +30,18 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) => {
   const location = useLocation();
   const currentStep = steps.findIndex(s => s.path === location.pathname) + 1;
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+      navigate("/");
+    } catch (error) {
+      toast.error("Failed to sign out");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -53,9 +69,15 @@ export const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutPr
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground transition-all">
-            <Settings className="w-5 h-5" />
-          </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-10 h-10 rounded-xl"
+            onClick={handleSignOut}
+            title="Sign Out"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
       </motion.header>
 

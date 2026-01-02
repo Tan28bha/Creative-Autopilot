@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Download, 
@@ -26,14 +26,67 @@ const ExportPage = () => {
   const [selectedFormat, setSelectedFormat] = useState("png");
   const [isExporting, setIsExporting] = useState(false);
   const [exportComplete, setExportComplete] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Retrieve generated image from localStorage
+    const storedImage = localStorage.getItem("generatedCreativeImage");
+    if (storedImage) {
+      setGeneratedImage(storedImage);
+    }
+  }, []);
 
   const handleExport = async () => {
+    if (!generatedImage) {
+      toast.error("No image available to export");
+      return;
+    }
+
     setIsExporting(true);
-    // Simulate export process
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsExporting(false);
-    setExportComplete(true);
-    toast.success("Creative exported successfully!");
+    try {
+      let blob: Blob;
+
+      if (generatedImage.startsWith("data:")) {
+        // Handle data URL - convert directly to blob
+        const base64Data = generatedImage.split(",")[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        blob = new Blob([byteArray], { type: "image/png" });
+      } else {
+        // Handle regular URL
+        const response = await fetch(generatedImage);
+        if (!response.ok) {
+          throw new Error("Failed to fetch image");
+        }
+        blob = await response.blob();
+      }
+
+      // For format conversion (JPG, WEBP, PDF), we'd need canvas conversion
+      // For now, download as PNG which works with data URLs
+      const fileExtension = selectedFormat === "jpg" ? "jpg" : selectedFormat === "webp" ? "webp" : selectedFormat === "pdf" ? "pdf" : "png";
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `creative.${fileExtension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setIsExporting(false);
+      setExportComplete(true);
+      toast.success("Creative exported successfully!");
+    } catch (error) {
+      console.error("Export error:", error);
+      setIsExporting(false);
+      toast.error("Failed to export creative");
+    }
   };
 
   const handleCopyLink = () => {
@@ -65,14 +118,22 @@ const ExportPage = () => {
             {/* Preview */}
             <div className="space-y-4">
               <h3 className="font-medium">Preview</h3>
-              <div className="aspect-[9/16] max-h-[500px] mx-auto rounded-2xl border border-border bg-gradient-to-br from-primary/20 via-accent/20 to-primary/10 overflow-hidden flex items-center justify-center">
-                <div className="text-center p-6">
-                  <FileImage className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Your creative preview</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Generate a creative in the previous step
-                  </p>
-                </div>
+              <div className="aspect-[9/16] max-h-[500px] mx-auto rounded-2xl border border-border overflow-hidden bg-card flex items-center justify-center">
+                {generatedImage ? (
+                  <img
+                    src={generatedImage}
+                    alt="Generated creative preview"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-center p-6">
+                    <FileImage className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Your creative preview</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Generate a creative in the previous step
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -135,7 +196,7 @@ const ExportPage = () => {
               {/* Export Button */}
               <Button
                 onClick={handleExport}
-                disabled={isExporting}
+                disabled={isExporting || !generatedImage}
                 variant="hero"
                 size="lg"
                 className="w-full"

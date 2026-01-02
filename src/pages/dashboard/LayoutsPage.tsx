@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Layers, Check, ArrowRight, ArrowLeft, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -75,6 +75,15 @@ interface LayoutsPageProps {
 const LayoutsPage = ({ brandAnalysis }: LayoutsPageProps = {}) => {
   const [selectedFormats, setSelectedFormats] = useState<number[]>([0]);
   const [activeTab, setActiveTab] = useState<"formats" | "ai-layout">("formats");
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Retrieve generated image from localStorage
+    const storedImage = localStorage.getItem("generatedCreativeImage");
+    if (storedImage) {
+      setGeneratedImage(storedImage);
+    }
+  }, []);
 
   const toggleFormat = (index: number) => {
     setSelectedFormats((prev) =>
@@ -103,6 +112,22 @@ const LayoutsPage = ({ brandAnalysis }: LayoutsPageProps = {}) => {
               </p>
             </div>
           </div>
+
+          {/* Generated Image Preview */}
+          {generatedImage && (
+            <div className="mb-8">
+              <h3 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wide">
+                Generated Creative Preview
+              </h3>
+              <div className="rounded-2xl border border-border overflow-hidden bg-card">
+                <img
+                  src={generatedImage}
+                  alt="Generated creative"
+                  className="w-full h-auto max-h-[400px] object-contain"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Popular Formats */}
           <div className="mb-8">

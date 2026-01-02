@@ -3,8 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import AuthPage from "./pages/AuthPage";
 import UploadPage from "./pages/dashboard/UploadPage";
 import GeneratePage from "./pages/dashboard/GeneratePage";
 import LayoutsPage from "./pages/dashboard/LayoutsPage";
@@ -14,22 +17,60 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Navigate to="/dashboard/upload" replace />} />
-          <Route path="/dashboard/upload" element={<UploadPage />} />
-          <Route path="/dashboard/generate" element={<GeneratePage />} />
-          <Route path="/dashboard/layouts" element={<LayoutsPage />} />
-          <Route path="/dashboard/export" element={<ExportPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/dashboard/upload" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/upload"
+              element={
+                <ProtectedRoute>
+                  <UploadPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/generate"
+              element={
+                <ProtectedRoute>
+                  <GeneratePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/layouts"
+              element={
+                <ProtectedRoute>
+                  <LayoutsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/export"
+              element={
+                <ProtectedRoute>
+                  <ExportPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
