@@ -89,7 +89,7 @@ Creative Autopilot introduces:
 
 ### 🏠 Landing Page
 
-![Landing Page](./screenshots/landing.png)
+![Landing Page](./screenshots\Screenshot 2026-01-02 201234.png)
 
 ### 🎨 Brand Analyzer
 
