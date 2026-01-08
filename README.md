@@ -15,7 +15,7 @@
 
 ---
 
-## 🏆 Why Creative Autopilot? (For Judges & Recruiters)
+## 🏆 Why Creative Autopilot?
 
 ### 🚨 The Problem
 
