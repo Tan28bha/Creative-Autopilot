@@ -1,14 +1,3 @@
-Perfect 👍
-Below is an **enhanced, hackathon-ready + recruiter-friendly README** with:
-
-* ✅ **Badges (build, license, tech stack)**
-* 📸 **Screenshots & Demo GIF sections (placeholders + structure)**
-* 🏆 **Judging-optimized storytelling (Problem → Innovation → Impact)**
-
-You can **copy-paste this directly as `README.md`** and just replace image links later.
-
----
-
 # 🚀 Creative Autopilot
 
 ### *AI-Powered Creative Automation Platform*
@@ -26,7 +15,7 @@ You can **copy-paste this directly as `README.md`** and just replace image links
 
 ---
 
-## 🏆 Why Creative Autopilot? (For Judges & Recruiters)
+## 🏆 Why Creative Autopilot?
 
 ### 🚨 The Problem
 
@@ -85,43 +74,11 @@ Creative Autopilot introduces:
 
 ## 📸 Screenshots
 
-> *(Replace image paths with actual screenshots later)*
+(<img width="1881" height="837" alt="Screenshot 2026-01-02 201234" src="https://github.com/user-attachments/assets/eb50ea68-edb5-478c-a862-d134821f3ad9" />
+)
 
-### 🏠 Landing Page
-
-![Landing Page](./screenshots/landing.png)
-
-### 🎨 Brand Analyzer
-
-![Brand Analyzer](./screenshots/brand-analyzer.png)
-
-### 🧠 AI Creative Studio
-
-![Creative Studio](./screenshots/creative-studio.png)
-
-### 🖌️ Canvas Editor
-
-![Canvas Editor](./screenshots/canvas-editor.png)
-
-### 📊 Quality Scoring Panel
-
-![Quality Score](./screenshots/quality-score.png)
-
----
-
-## 🎥 Demo GIFs (Highly Recommended for Hackathons)
-
-### ⚡ Generate Creative in Seconds
-
-![Generate Demo](./demos/generate.gif)
-
-### 🧩 Edit & Merge Products
-
-![Edit Demo](./demos/edit.gif)
-
-### 🛡️ Compliance & Scoring
-
-![Compliance Demo](./demos/compliance.gif)
+<img width="1857" height="857" alt="Screenshot 2026-01-02 201340" src="https://github.com/user-attachments/assets/627d0efd-e690-401b-ba0e-769dd6211159" />
+<img width="1801" height="880" alt="Screenshot 2026-01-02 201358" src="https://github.com/user-attachments/assets/203bff0d-a66a-4154-9b39-4f4c1db1eb25" />
 
 ---
 
@@ -172,24 +129,10 @@ Frontend (React + Vite)
 
 ---
 
-## 🔐 Environment Variables
-
-```env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-
-GOOGLE_AI_API_KEY=
-NSCALE_API_KEY=
-STABILITY_API_KEY=      # optional
-HUGGINGFACE_API_KEY=   # optional
-```
-
----
-
 ## ⚙️ Local Setup
 
 ```bash
-git clone https://github.com/your-username/creative-autopilot.git
+git clone https://github.com/Tan28bha/Creative-Autopilot
 cd creative-autopilot
 npm install
 npm run dev
@@ -214,6 +157,207 @@ supabase functions deploy
 7. Export for all platforms
 
 ---
+
+# ⚙️ Setup & Installation
+
+## Prerequisites
+
+Make sure you have the following installed:
+
+* **Node.js** `>= 18`
+* **npm** or **pnpm**
+* **Supabase CLI**
+* A **Supabase account**
+* API keys for AI services (listed below)
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+GOOGLE_AI_API_KEY=your_gemini_api_key
+NSCALE_API_KEY=your_nscale_api_key
+STABILITY_API_KEY=your_stability_api_key   # optional
+HUGGINGFACE_API_KEY=your_hf_api_key        # optional
+```
+
+> ⚠️ Never commit `.env` files to GitHub.
+
+---
+
+## 📦 Dependencies
+
+### Frontend
+
+* React 18
+* TypeScript
+* Vite
+* Tailwind CSS
+* shadcn/ui (Radix UI)
+* Framer Motion
+* Fabric.js
+* React Query
+* React Hook Form + Zod
+
+### Backend
+
+* Supabase (PostgreSQL + Auth)
+* Supabase Edge Functions (Deno)
+
+### AI / ML Services
+
+* Google Gemini Vision API
+* FLUX.1 (via NScale)
+* Stability AI SD3 (optional)
+* Hugging Face Inference API (fallback)
+
+---
+
+## 🛠️ Local Setup Steps
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/Tan28bha/Creative-Autopilot.git
+cd creative-autopilot
+```
+
+---
+
+### 2️⃣ Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 3️⃣ Start the frontend
+
+```bash
+npm run dev
+```
+
+App will be available at:
+
+```
+http://localhost:8080
+```
+
+---
+
+### 4️⃣ Setup Supabase
+
+```bash
+supabase login
+supabase init
+supabase start
+```
+
+---
+
+### 5️⃣ Deploy Edge Functions
+
+```bash
+supabase functions deploy
+```
+
+---
+
+## ▶️ Usage Instructions
+
+### Step 1: Authentication
+
+* Sign up / login using email & password
+* Supabase handles session management
+
+---
+
+### Step 2: Upload Brand Assets
+
+* Upload logos, packshots, or past creatives
+* Assets are stored securely in Supabase Storage
+* Brand Analyzer extracts:
+
+  * Colors
+  * Typography
+  * Visual style
+  * Brand personality
+
+---
+
+### Step 3: Generate Creatives
+
+* Choose creative style
+* (Optional) Select product image
+* AI generates multiple creative variations
+* Powered by FLUX.1 / SD3
+
+---
+
+### Step 4: Edit & Customize
+
+* Open creative in Canvas Editor
+* Drag & drop layers
+* Edit text, resize elements
+* Merge products into backgrounds
+* Regenerate variations if needed
+
+---
+
+### Step 5: Compliance & Quality Check
+
+* Run auto compliance check
+* View platform readiness
+* See quality score breakdown:
+
+  * Visual hierarchy
+  * Brand consistency
+  * Readability
+  * Platform fitness
+
+---
+
+### Step 6: Export
+
+* Select output platforms (Instagram, Facebook, etc.)
+* Download optimized creatives
+* Correct dimensions & size (<500KB)
+
+---
+
+## 🧪 Development Scripts
+
+```bash
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run preview    # Preview production build
+npm run lint       # Run ESLint
+```
+
+---
+
+## 🧠 Troubleshooting
+
+### Image generation is slow?
+
+* FLUX.1 takes 10–30 seconds
+* Check API rate limits
+* Verify API keys
+
+### Supabase functions failing?
+
+* Ensure `.env` variables are set
+* Run `supabase functions serve` locally
+* Check Supabase logs
+
+---
+
 
 ## 🚀 Roadmap
 
@@ -253,20 +397,11 @@ MIT License © 2026
 
 ---
 
-## 🙌 Final Note (Judges ❤️ This)
+## 🙌 Final Note
 
 > **Creative Autopilot is not just an AI image generator.**
 > It is a **creative intelligence system** that understands brands, follows rules, evaluates quality, and scales marketing creativity autonomously.
 
 ---
 
-### 👉 Want Next?
 
-I can:
-
-* Add **Hackathon Pitch Section (Problem → Solution → Tech → Impact)**
-* Write a **1-minute demo script**
-* Generate **screenshots mockups**
-* Create a **README.md specifically optimized for Devfolio / Unstop / GitHub Stars**
-
-Just say the word 🚀
