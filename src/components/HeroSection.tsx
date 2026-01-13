@@ -78,10 +78,12 @@ export const HeroSection = () => {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
+            <Link to="https://www.youtube.com/watch?v=j5p-8SkaHJ0">
             <Button variant="glass" size="xl" className="group">
               <Play className="w-5 h-5" />
               Watch Demo
             </Button>
+            </Link>
           </motion.div>
 
           {/* Stats */}
